@@ -1,0 +1,54 @@
+{
+  "name": "cheapest-llm-router",
+  "version": "0.1.0",
+  "description": "MCP server that routes any prompt to the cheapest reachable free/cheap LLM (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini...). Reuses Free & Cheap Tokens model channels.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "clr-mcp": "./src/server.mjs"
+  },
+  "main": "src/http.mjs",
+  "files": [
+    "src",
+    "data",
+    "scripts",
+    ".actor",
+    "SPEC.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/server.mjs",
+    "start:http": "node src/http.mjs",
+    "test": "node --test tests/router.test.mjs",
+    "smoke": "node scripts/mcp-smoke.mjs",
+    "http:e2e": "node scripts/http-e2e-test.mjs",
+    "showcase": "node scripts/showcase.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.1",
+    "express": "5.2.1",
+    "apify": "3.7.2",
+    "zod": "4.6.5"
+  },
+  "keywords": [
+    "mcp",
+    "llm",
+    "router",
+    "cheapest",
+    "free-tier",
+    "kimi",
+    "qwen",
+    "deepseek",
+    "cloudflare",
+    "agents"
+  ],
+  "author": "Cheapest-LLM-Router Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PanStories/cheapest-llm-router.git"
+  }
+}

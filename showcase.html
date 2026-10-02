@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Cheapest-LLM Router — Verification Showcase</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#111c34; --panel-2:#16233f; --ink:#e8eef7; --muted:#9fb0c8;
+    --line:#23324f; --accent:#2dd4bf; --accent-2:#3b82f6; --free:#22c55e; --paid:#f59e0b;
+    --ok:#22c55e; --bad:#ef4444; --radius:14px; --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0b1220,#0f172a 240px);color:var(--ink);
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans SC',sans-serif;line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .logo{width:42px;height:42px;flex:0 0 42px}
+  h1{font-size:24px;margin:0;letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:14px;margin:2px 0 0}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0 6px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .stat .n{font-size:26px;font-weight:700;color:var(--accent)}
+  .stat .l{color:var(--muted);font-size:12px;margin-top:2px}
+  .note{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--accent-2);
+    border-radius:10px;padding:14px 16px;margin:22px 0;font-size:13.5px;color:var(--muted)}
+  .note b{color:var(--ink)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:16px 0}
+  .card-head{display:flex;align-items:center;gap:10px}
+  .card-head h3{margin:0;font-size:16px}
+  .idx{width:24px;height:24px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+  .prompt{color:var(--muted);font-size:13.5px;margin:10px 0;border-left:2px solid var(--line);padding-left:10px}
+  .chosen{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:6px 0}
+  .chosen-name{font-weight:700;font-size:15px;color:var(--accent)}
+  .chosen-meta{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .chosen-cost{color:var(--ink);font-size:13px;margin-top:6px;font-family:var(--mono)}
+  .reasoning{color:var(--muted);font-size:12.5px;margin-top:8px}
+  .fb{color:var(--muted);font-size:12px;margin-top:6px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-family:var(--mono)}
+  .tag-free{color:var(--free);border-color:rgba(34,197,94,.4)}
+  .tag-paid{color:var(--paid);border-color:rgba(245,158,11,.4)}
+  .tag-ok{color:var(--ok);border-color:rgba(34,197,94,.4)}
+  .tag-bad{color:var(--bad);border-color:rgba(239,68,68,.4)}
+  details.raw{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+  details.raw summary{cursor:pointer;color:var(--accent-2);font-size:12.5px}
+  pre{background:#0a1322;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;
+    font-family:var(--mono);font-size:11.5px;color:#cfe3ff;max-height:320px}
+  table.cmp{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+  table.cmp th,table.cmp td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);color:var(--muted)}
+  table.cmp th{color:var(--ink);font-weight:600}
+  .savings{color:var(--accent);font-size:12.5px;margin:8px 0 0}
+  footer{color:var(--muted);font-size:12px;margin-top:30px;border-top:1px solid var(--line);padding-top:16px}
+  footer code{color:#cfe3ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <svg class="logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <rect x="6" y="18" width="12" height="12" rx="3" stroke="#2dd4bf" stroke-width="2"/>
+      <rect x="30" y="6" width="12" height="12" rx="3" stroke="#3b82f6" stroke-width="2"/>
+      <rect x="30" y="30" width="12" height="12" rx="3" stroke="#22c55e" stroke-width="2"/>
+      <path d="M18 24 H30 M36 12 V18 M36 36 V30" stroke="#9fb0c8" stroke-width="2"/>
+    </svg>
+    <div>
+      <h1>Cheapest-LLM Router</h1>
+      <div class="sub">Verification Showcase — 真实路由引擎输出（非摘要）</div>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n">19</div><div class="l">收录模型</div></div>
+    <div class="stat"><div class="n">15</div><div class="l">免费通道</div></div>
+    <div class="stat"><div class="n">4</div><div class="l">廉价付费兜底</div></div>
+    <div class="stat"><div class="n">14</div><div class="l">来源厂商</div></div>
+  </div>
+
+  <div class="note">
+    <b>这是什么：</b>给定一条 prompt，路由器自动选出<b>当下最便宜且可达</b>的模型（优先免费通道：Kimi K2.6 / Qwen / DeepSeek / Cloudflare Workers AI / Groq / Gemini 等），并给出兜底链与成本估算。
+    下表每个样本都是<b>路由引擎真实计算</b>的结果（含 Raw JSON 可展开核对字节）。
+    <br/><b>数据源：</b>复用 Free &amp; Cheap Tokens（FACT）已核验的促销清单 + 市场标价。价格为<b>指示性 USD/百万token</b>，生产前请以各厂商定价页为准。
+  </div>
+
+  <section class="card">
+      <header class="card-head"><span class="idx">1</span><h3>中文财报推理</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">用中文分析这份财报的核心风险与分红可持续性。</div>
+      <div class="chosen">
+           <div class="chosen-name">DeepSeek-V3 (via SiliconFlow)</div>
+           <div class="chosen-meta">SiliconFlow · 免费 · low latency · quality 86</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 36 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest cost. Estimated 36 input + 512 output tokens. Cheapest reachable is DeepSeek-V3 (via SiliconFlow) — free (¥16 voucher (~20M tokens)). No token cost. Required capabilities [chinese, reasoning] satisfied. Constrained to region=CN (mainland-accessible without VPN).</div>
+           <div class="fb">Fallbacks: Qwen3-Plus (via Aliyun Bailian) → GLM-4-Plus (via Zhipu BigModel) → Doubao 1.5 Pro (via Volcengine Ark)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>DeepSeek-V3 (via SiliconFlow)</td><td>SiliconFlow</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese</td></tr><tr><td>Qwen3-Plus (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr><tr><td>GLM-4-Plus (via Zhipu BigModel)</td><td>Zhipu BigModel</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, long_context</td></tr><tr><td>Doubao 1.5 Pro (via Volcengine Ark)</td><td>Volcengine Ark (Doubao)</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, vision</td></tr><tr><td>Hunyuan-Pro (via Tencent Cloud)</td><td>Tencent Hunyuan</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, long_context</td></tr><tr><td>Kimi K2 (Moonshot direct trial)</td><td>Moonshot Kimi</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, long_context</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0021 / ¥0.015 (DeepSeek-V3 (via SiliconFlow) → Qwen-Max (Aliyun Bailian, paid))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "deepseek-v3-siliconflow",
+    "name": "DeepSeek-V3 (via SiliconFlow)",
+    "provider": "SiliconFlow",
+    "access_path": "siliconflow",
+    "model_ref": "deepseek-ai/DeepSeek-V3",
+    "free": true,
+    "free_quota": "¥16 voucher (~20M tokens)",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 86,
+    "context_window": 128000,
+    "region": [
+      "CN"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "code",
+      "chinese"
+    ],
+    "notes": "Mainland phone + real-name required. Cheap paid continuation after voucher."
+  },
+  "fallback_chain": [
+    {
+      "id": "qwen3-plus-bailian",
+      "name": "Qwen3-Plus (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen3-plus",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 84,
+      "context_window": 131072,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Alibaba Cloud real-name verification required. Strongest free Chinese model on Bailian."
+    },
+    {
+      "id": "glm-4-plus-zhipu",
+      "name": "GLM-4-Plus (via Zhipu BigModel)",
+      "provider": "Zhipu BigModel",
+      "access_path": "zhipu",
+      "model_ref": "glm-4-plus",
+      "free": true,
+      "free_quota": "20M tokens per referral",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 82,
+      "context_window": 128000,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Referral loop: both sides get 20M tokens. Real-name required."
+    },
+    {
+      "id": "doubao-1.5-pro-volcengine",
+      "name": "Doubao 1.5 Pro (via Volcengine Ark)",
+      "provider": "Volcengine Ark (Doubao)",
+      "access_path": "volcengine-ark",
+      "model_ref": "doubao-1.5-pro",
+      "free": true,
+      "free_quota": "5,000,000 tokens trial",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 80,
+      "context_window": 32768,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "chinese",
+        "vision"
+      ],
+      "notes": "Volcengine real-name + card binding required. Trial ends 2026-12-31."
+    }
+  ],
+  "estimated_input_tokens": 36,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "cost",
+  "reasoning": "Routed by lowest cost. Estimated 36 input + 512 output tokens. Cheapest reachable is DeepSeek-V3 (via SiliconFlow) — free (¥16 voucher (~20M tokens)). No token cost. Required capabilities [chinese, reasoning] satisfied. Constrained to region=CN (mainland-accessible without VPN)."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">2</span><h3>代码生成（全球）</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">Write a Python function to backtest a moving-average crossover strategy.</div>
+      <div class="chosen">
+           <div class="chosen-name">Gemini 2.5 Flash (via Google AI Studio)</div>
+           <div class="chosen-meta">Google AI Studio · 免费 · low latency · quality 87</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 18 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest cost. Estimated 18 input + 512 output tokens. Cheapest reachable is Gemini 2.5 Flash (via Google AI Studio) — free (15 RPM / 1,500 RPD). No token cost. Required capabilities [code] satisfied.</div>
+           <div class="fb">Fallbacks: Llama 3.1 70B (via Groq) → DeepSeek-V3 (via SiliconFlow) → Qwen3-Plus (via Aliyun Bailian)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Gemini 2.5 Flash (via Google AI Studio)</td><td>Google AI Studio</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, vision, long_context</td></tr><tr><td>Llama 3.1 70B (via Groq)</td><td>Groq</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code</td></tr><tr><td>DeepSeek-V3 (via SiliconFlow)</td><td>SiliconFlow</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese</td></tr><tr><td>Qwen3-Plus (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr><tr><td>Llama 3.1 8B (via Groq)</td><td>Groq</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, code</td></tr><tr><td>Kimi K2.6 (via Cloudflare Workers AI)</td><td>Cloudflare Workers AI</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0021 / ¥0.015 (Gemini 2.5 Flash (via Google AI Studio) → Claude 3.5 Haiku (Anthropic, paid reference))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "gemini-2.5-flash-aistudio",
+    "name": "Gemini 2.5 Flash (via Google AI Studio)",
+    "provider": "Google AI Studio",
+    "access_path": "google-ai-studio",
+    "model_ref": "gemini-2.5-flash",
+    "free": true,
+    "free_quota": "15 RPM / 1,500 RPD",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 87,
+    "context_window": 1048576,
+    "region": [
+      "global"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "code",
+      "vision",
+      "long_context"
+    ],
+    "notes": "Free multimodal + 1M context. Excluded in CU/IR/KP/SY. Opt out of training in console."
+  },
+  "fallback_chain": [
+    {
+      "id": "llama-3.1-70b-groq",
+      "name": "Llama 3.1 70B (via Groq)",
+      "provider": "Groq",
+      "access_path": "groq",
+      "model_ref": "llama-3.1-70b-versatile",
+      "free": true,
+      "free_quota": "14,400 RPD / 30 RPM",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 83,
+      "context_window": 131072,
+      "region": [
+        "global"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code"
+      ],
+      "notes": "Fastest free open-weight model. Google/GitHub sign-in, no card."
+    },
+    {
+      "id": "deepseek-v3-siliconflow",
+      "name": "DeepSeek-V3 (via SiliconFlow)",
+      "provider": "SiliconFlow",
+      "access_path": "siliconflow",
+      "model_ref": "deepseek-ai/DeepSeek-V3",
+      "free": true,
+      "free_quota": "¥16 voucher (~20M tokens)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 86,
+      "context_window": 128000,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese"
+      ],
+      "notes": "Mainland phone + real-name required. Cheap paid continuation after voucher."
+    },
+    {
+      "id": "qwen3-plus-bailian",
+      "name": "Qwen3-Plus (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen3-plus",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 84,
+      "context_window": 131072,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Alibaba Cloud real-name verification required. Strongest free Chinese model on Bailian."
+    }
+  ],
+  "estimated_input_tokens": 18,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "cost",
+  "reasoning": "Routed by lowest cost. Estimated 18 input + 512 output tokens. Cheapest reachable is Gemini 2.5 Flash (via Google AI Studio) — free (15 RPM / 1,500 RPD). No token cost. Required capabilities [code] satisfied."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">3</span><h3>图像理解（Vision）</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">Describe the trends visible in this candlestick-chart screenshot.</div>
+      <div class="chosen">
+           <div class="chosen-name">Gemini 2.5 Flash (via Google AI Studio)</div>
+           <div class="chosen-meta">Google AI Studio · 免费 · low latency · quality 87</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 17 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest cost. Estimated 17 input + 512 output tokens. Cheapest reachable is Gemini 2.5 Flash (via Google AI Studio) — free (15 RPM / 1,500 RPD). No token cost. Required capabilities [vision] satisfied.</div>
+           <div class="fb">Fallbacks: Doubao 1.5 Pro (via Volcengine Ark) → Qwen2.5-VL-72B (via Aliyun Bailian) → GPT-4o-mini (OpenAI, paid reference)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Gemini 2.5 Flash (via Google AI Studio)</td><td>Google AI Studio</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, vision, long_context</td></tr><tr><td>Doubao 1.5 Pro (via Volcengine Ark)</td><td>Volcengine Ark (Doubao)</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, vision</td></tr><tr><td>Qwen2.5-VL-72B (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, vision, chinese</td></tr><tr><td>GPT-4o-mini (OpenAI, paid reference)</td><td>OpenAI</td><td><span class="tag tag-paid">PAID</span></td><td>$0.0003</td><td>¥0.002</td><td>text, vision, code, reasoning</td></tr><tr><td>Claude 3.5 Haiku (Anthropic, paid reference)</td><td>Anthropic</td><td><span class="tag tag-paid">PAID</span></td><td>$0.0021</td><td>¥0.015</td><td>text, vision, code, reasoning</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0021 / ¥0.015 (Gemini 2.5 Flash (via Google AI Studio) → Claude 3.5 Haiku (Anthropic, paid reference))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "gemini-2.5-flash-aistudio",
+    "name": "Gemini 2.5 Flash (via Google AI Studio)",
+    "provider": "Google AI Studio",
+    "access_path": "google-ai-studio",
+    "model_ref": "gemini-2.5-flash",
+    "free": true,
+    "free_quota": "15 RPM / 1,500 RPD",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 87,
+    "context_window": 1048576,
+    "region": [
+      "global"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "code",
+      "vision",
+      "long_context"
+    ],
+    "notes": "Free multimodal + 1M context. Excluded in CU/IR/KP/SY. Opt out of training in console."
+  },
+  "fallback_chain": [
+    {
+      "id": "doubao-1.5-pro-volcengine",
+      "name": "Doubao 1.5 Pro (via Volcengine Ark)",
+      "provider": "Volcengine Ark (Doubao)",
+      "access_path": "volcengine-ark",
+      "model_ref": "doubao-1.5-pro",
+      "free": true,
+      "free_quota": "5,000,000 tokens trial",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 80,
+      "context_window": 32768,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "chinese",
+        "vision"
+      ],
+      "notes": "Volcengine real-name + card binding required. Trial ends 2026-12-31."
+    },
+    {
+      "id": "qwen2.5-vl-bailian",
+      "name": "Qwen2.5-VL-72B (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen2.5-vl-72b-instruct",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 78,
+      "context_window": 32768,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "vision",
+        "chinese"
+      ],
+      "notes": "Free vision model on Bailian for image understanding tasks."
+    },
+    {
+      "id": "gpt-4o-mini-openai-reference",
+      "name": "GPT-4o-mini (OpenAI, paid reference)",
+      "provider": "OpenAI",
+      "access_path": "openai-api",
+      "model_ref": "gpt-4o-mini",
+      "free": false,
+      "free_quota": null,
+      "cost_usd": 0.00031,
+      "cost_cny": 0.00223,
+      "latency_tier": "low",
+      "quality_score": 82,
+      "context_window": 128000,
+      "region": [
+        "global"
+      ],
+      "capabilities": [
+        "text",
+        "vision",
+        "code",
+        "reasoning"
+      ],
+      "notes": "Reference baseline. Shows how much the free/cheap routes save vs a known paid model."
+    }
+  ],
+  "estimated_input_tokens": 17,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "cost",
+  "reasoning": "Routed by lowest cost. Estimated 17 input + 512 output tokens. Cheapest reachable is Gemini 2.5 Flash (via Google AI Studio) — free (15 RPM / 1,500 RPD). No token cost. Required capabilities [vision] satisfied."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">4</span><h3>长上下文摘要</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">Summarize this 80-page legal contract and list the risky clauses.</div>
+      <div class="chosen">
+           <div class="chosen-name">Gemini 2.5 Flash (via Google AI Studio)</div>
+           <div class="chosen-meta">Google AI Studio · 免费 · low latency · quality 87</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 17 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest cost. Estimated 17 input + 512 output tokens. Cheapest reachable is Gemini 2.5 Flash (via Google AI Studio) — free (15 RPM / 1,500 RPD). No token cost. Required capabilities [long_context] satisfied.</div>
+           <div class="fb">Fallbacks: Qwen3-Plus (via Aliyun Bailian) → Kimi K2.6 (via Cloudflare Workers AI) → GLM-4-Plus (via Zhipu BigModel)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Gemini 2.5 Flash (via Google AI Studio)</td><td>Google AI Studio</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, vision, long_context</td></tr><tr><td>Qwen3-Plus (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr><tr><td>Kimi K2.6 (via Cloudflare Workers AI)</td><td>Cloudflare Workers AI</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr><tr><td>GLM-4-Plus (via Zhipu BigModel)</td><td>Zhipu BigModel</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, long_context</td></tr><tr><td>Hunyuan-Pro (via Tencent Cloud)</td><td>Tencent Hunyuan</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, long_context</td></tr><tr><td>Kimi K2 (Moonshot direct trial)</td><td>Moonshot Kimi</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, long_context</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0021 / ¥0.015 (Gemini 2.5 Flash (via Google AI Studio) → Qwen-Max (Aliyun Bailian, paid))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "gemini-2.5-flash-aistudio",
+    "name": "Gemini 2.5 Flash (via Google AI Studio)",
+    "provider": "Google AI Studio",
+    "access_path": "google-ai-studio",
+    "model_ref": "gemini-2.5-flash",
+    "free": true,
+    "free_quota": "15 RPM / 1,500 RPD",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 87,
+    "context_window": 1048576,
+    "region": [
+      "global"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "code",
+      "vision",
+      "long_context"
+    ],
+    "notes": "Free multimodal + 1M context. Excluded in CU/IR/KP/SY. Opt out of training in console."
+  },
+  "fallback_chain": [
+    {
+      "id": "qwen3-plus-bailian",
+      "name": "Qwen3-Plus (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen3-plus",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 84,
+      "context_window": 131072,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Alibaba Cloud real-name verification required. Strongest free Chinese model on Bailian."
+    },
+    {
+      "id": "kimi-k2.6-cloudflare",
+      "name": "Kimi K2.6 (via Cloudflare Workers AI)",
+      "provider": "Cloudflare Workers AI",
+      "access_path": "cloudflare-workers-ai",
+      "model_ref": "@cf/moonshotai/kimi-k2.6",
+      "free": true,
+      "free_quota": "10,000 neurons/day (shared account pool)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "medium",
+      "quality_score": 88,
+      "context_window": 131072,
+      "region": [
+        "global"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Free tier requires a Cloudflare account (card binding, no charge). Kimi K2.6 is the headline free large model on Workers AI."
+    },
+    {
+      "id": "glm-4-plus-zhipu",
+      "name": "GLM-4-Plus (via Zhipu BigModel)",
+      "provider": "Zhipu BigModel",
+      "access_path": "zhipu",
+      "model_ref": "glm-4-plus",
+      "free": true,
+      "free_quota": "20M tokens per referral",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 82,
+      "context_window": 128000,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Referral loop: both sides get 20M tokens. Real-name required."
+    }
+  ],
+  "estimated_input_tokens": 17,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "cost",
+  "reasoning": "Routed by lowest cost. Estimated 17 input + 512 output tokens. Cheapest reachable is Gemini 2.5 Flash (via Google AI Studio) — free (15 RPM / 1,500 RPD). No token cost. Required capabilities [long_context] satisfied."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">5</span><h3>低延迟优先</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">Classify this customer-support ticket into one of 5 categories.</div>
+      <div class="chosen">
+           <div class="chosen-name">Kimi K2 (Moonshot direct trial)</div>
+           <div class="chosen-meta">Moonshot Kimi · 免费 · low latency · quality 85</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 16 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest latency. Estimated 16 input + 512 output tokens. Cheapest reachable is Kimi K2 (Moonshot direct trial) — free (¥5 new-user experience credit). No token cost.</div>
+           <div class="fb">Fallbacks: Qwen3-Plus (via Aliyun Bailian) → Qwen2.5-7B-Instruct (via Aliyun Bailian) → DeepSeek-V3 (via SiliconFlow)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Gemini 2.5 Flash (via Google AI Studio)</td><td>Google AI Studio</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, vision, long_context</td></tr><tr><td>Llama 3.1 70B (via Groq)</td><td>Groq</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code</td></tr><tr><td>DeepSeek-V3 (via SiliconFlow)</td><td>SiliconFlow</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese</td></tr><tr><td>Qwen3-Plus (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr><tr><td>Llama 3.1 8B (via Groq)</td><td>Groq</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, code</td></tr><tr><td>Kimi K2.6 (via Cloudflare Workers AI)</td><td>Cloudflare Workers AI</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0021 / ¥0.015 (Gemini 2.5 Flash (via Google AI Studio) → Qwen-Max (Aliyun Bailian, paid))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "kimi-k2-moonshot-trial",
+    "name": "Kimi K2 (Moonshot direct trial)",
+    "provider": "Moonshot Kimi",
+    "access_path": "moonshot-api",
+    "model_ref": "moonshot-v1-auto",
+    "free": true,
+    "free_quota": "¥5 new-user experience credit",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 85,
+    "context_window": 128000,
+    "region": [
+      "CN"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "chinese",
+      "long_context"
+    ],
+    "notes": "Mainland phone verification required. Good Chinese long-context reasoning on the native platform."
+  },
+  "fallback_chain": [
+    {
+      "id": "qwen3-plus-bailian",
+      "name": "Qwen3-Plus (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen3-plus",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 84,
+      "context_window": 131072,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Alibaba Cloud real-name verification required. Strongest free Chinese model on Bailian."
+    },
+    {
+      "id": "qwen2.5-7b-bailian",
+      "name": "Qwen2.5-7B-Instruct (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen2.5-7b-instruct",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 70,
+      "context_window": 32768,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "code",
+        "chinese"
+      ],
+      "notes": "Small fast Chinese-capable model, good for lightweight tasks."
+    },
+    {
+      "id": "deepseek-v3-siliconflow",
+      "name": "DeepSeek-V3 (via SiliconFlow)",
+      "provider": "SiliconFlow",
+      "access_path": "siliconflow",
+      "model_ref": "deepseek-ai/DeepSeek-V3",
+      "free": true,
+      "free_quota": "¥16 voucher (~20M tokens)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 86,
+      "context_window": 128000,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese"
+      ],
+      "notes": "Mainland phone + real-name required. Cheap paid continuation after voucher."
+    }
+  ],
+  "estimated_input_tokens": 16,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "latency",
+  "reasoning": "Routed by lowest latency. Estimated 16 input + 512 output tokens. Cheapest reachable is Kimi K2 (Moonshot direct trial) — free (¥5 new-user experience credit). No token cost."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">6</span><h3>高质量优先</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">Produce a rigorous proof of the Law of Large Numbers (weak form).</div>
+      <div class="chosen">
+           <div class="chosen-name">Qwen-Max (Aliyun Bailian, paid)</div>
+           <div class="chosen-meta">Aliyun Bailian · 付费 · low latency · quality 90</div>
+           <div class="chosen-cost">est. cost: $0.0021 / ¥0.015 · 17 in + 512 out tokens</div>
+           <div class="reasoning">Routed by highest quality. Estimated 17 input + 512 output tokens. No free model matches the constraints; cheapest paid is Qwen-Max (Aliyun Bailian, paid) at $0.002075 (¥0.0149).</div>
+           <div class="fb">Fallbacks: Kimi K2.6 (via Cloudflare Workers AI) → Claude 3.5 Haiku (Anthropic, paid reference) → Gemini 2.5 Flash (via Google AI Studio)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Gemini 2.5 Flash (via Google AI Studio)</td><td>Google AI Studio</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, vision, long_context</td></tr><tr><td>Llama 3.1 70B (via Groq)</td><td>Groq</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code</td></tr><tr><td>DeepSeek-V3 (via SiliconFlow)</td><td>SiliconFlow</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese</td></tr><tr><td>Qwen3-Plus (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr><tr><td>Llama 3.1 8B (via Groq)</td><td>Groq</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, code</td></tr><tr><td>Kimi K2.6 (via Cloudflare Workers AI)</td><td>Cloudflare Workers AI</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, code, chinese, long_context</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0021 / ¥0.015 (Gemini 2.5 Flash (via Google AI Studio) → Qwen-Max (Aliyun Bailian, paid))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "qwen-max-bailian-paid",
+    "name": "Qwen-Max (Aliyun Bailian, paid)",
+    "provider": "Aliyun Bailian",
+    "access_path": "aliyun-bailian",
+    "model_ref": "qwen-max",
+    "free": false,
+    "free_quota": null,
+    "cost_usd": 0.002075,
+    "cost_cny": 0.014941,
+    "latency_tier": "low",
+    "quality_score": 90,
+    "context_window": 32768,
+    "region": [
+      "CN"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "chinese",
+      "long_context"
+    ],
+    "notes": "Top-tier Qwen, paid. Used as a high-quality paid fallback."
+  },
+  "fallback_chain": [
+    {
+      "id": "kimi-k2.6-cloudflare",
+      "name": "Kimi K2.6 (via Cloudflare Workers AI)",
+      "provider": "Cloudflare Workers AI",
+      "access_path": "cloudflare-workers-ai",
+      "model_ref": "@cf/moonshotai/kimi-k2.6",
+      "free": true,
+      "free_quota": "10,000 neurons/day (shared account pool)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "medium",
+      "quality_score": 88,
+      "context_window": 131072,
+      "region": [
+        "global"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "chinese",
+        "long_context"
+      ],
+      "notes": "Free tier requires a Cloudflare account (card binding, no charge). Kimi K2.6 is the headline free large model on Workers AI."
+    },
+    {
+      "id": "claude-haiku-anthropic-reference",
+      "name": "Claude 3.5 Haiku (Anthropic, paid reference)",
+      "provider": "Anthropic",
+      "access_path": "anthropic-api",
+      "model_ref": "claude-3-5-haiku-20241022",
+      "free": false,
+      "free_quota": null,
+      "cost_usd": 0.002062,
+      "cost_cny": 0.014844,
+      "latency_tier": "low",
+      "quality_score": 88,
+      "context_window": 200000,
+      "region": [
+        "global"
+      ],
+      "capabilities": [
+        "text",
+        "vision",
+        "code",
+        "reasoning"
+      ],
+      "notes": "Reference baseline for cost-comparison reports (premium paid model)."
+    },
+    {
+      "id": "gemini-2.5-flash-aistudio",
+      "name": "Gemini 2.5 Flash (via Google AI Studio)",
+      "provider": "Google AI Studio",
+      "access_path": "google-ai-studio",
+      "model_ref": "gemini-2.5-flash",
+      "free": true,
+      "free_quota": "15 RPM / 1,500 RPD",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 87,
+      "context_window": 1048576,
+      "region": [
+        "global"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning",
+        "code",
+        "vision",
+        "long_context"
+      ],
+      "notes": "Free multimodal + 1M context. Excluded in CU/IR/KP/SY. Opt out of training in console."
+    }
+  ],
+  "estimated_input_tokens": 17,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0.002075,
+  "estimated_cost_cny": 0.014941,
+  "priority": "quality",
+  "reasoning": "Routed by highest quality. Estimated 17 input + 512 output tokens. No free model matches the constraints; cheapest paid is Qwen-Max (Aliyun Bailian, paid) at $0.002075 (¥0.0149)."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">7</span><h3>大陆可用 + 视觉</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">识别这张商品图里的文字并翻译。</div>
+      <div class="chosen">
+           <div class="chosen-name">Doubao 1.5 Pro (via Volcengine Ark)</div>
+           <div class="chosen-meta">Volcengine Ark (Doubao) · 免费 · low latency · quality 80</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 24 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest cost. Estimated 24 input + 512 output tokens. Cheapest reachable is Doubao 1.5 Pro (via Volcengine Ark) — free (5,000,000 tokens trial). No token cost. Required capabilities [vision, chinese] satisfied. Constrained to region=CN (mainland-accessible without VPN).</div>
+           <div class="fb">Fallbacks: Qwen2.5-VL-72B (via Aliyun Bailian)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Doubao 1.5 Pro (via Volcengine Ark)</td><td>Volcengine Ark (Doubao)</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, vision</td></tr><tr><td>Qwen2.5-VL-72B (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, vision, chinese</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0000 / ¥0.000 (Doubao 1.5 Pro (via Volcengine Ark) → Qwen2.5-VL-72B (via Aliyun Bailian))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "doubao-1.5-pro-volcengine",
+    "name": "Doubao 1.5 Pro (via Volcengine Ark)",
+    "provider": "Volcengine Ark (Doubao)",
+    "access_path": "volcengine-ark",
+    "model_ref": "doubao-1.5-pro",
+    "free": true,
+    "free_quota": "5,000,000 tokens trial",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 80,
+    "context_window": 32768,
+    "region": [
+      "CN"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "chinese",
+      "vision"
+    ],
+    "notes": "Volcengine real-name + card binding required. Trial ends 2026-12-31."
+  },
+  "fallback_chain": [
+    {
+      "id": "qwen2.5-vl-bailian",
+      "name": "Qwen2.5-VL-72B (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen2.5-vl-72b-instruct",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 78,
+      "context_window": 32768,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "vision",
+        "chinese"
+      ],
+      "notes": "Free vision model on Bailian for image understanding tasks."
+    }
+  ],
+  "estimated_input_tokens": 24,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "cost",
+  "reasoning": "Routed by lowest cost. Estimated 24 input + 512 output tokens. Cheapest reachable is Doubao 1.5 Pro (via Volcengine Ark) — free (5,000,000 tokens trial). No token cost. Required capabilities [vision, chinese] satisfied. Constrained to region=CN (mainland-accessible without VPN)."
+}</pre></details>
+    </section>
+<section class="card">
+      <header class="card-head"><span class="idx">8</span><h3>不可能组合（应返回 ok:false）</h3><span class="tag tag-ok">ROUTED</span></header>
+      <div class="prompt">anything</div>
+      <div class="chosen">
+           <div class="chosen-name">Doubao 1.5 Pro (via Volcengine Ark)</div>
+           <div class="chosen-meta">Volcengine Ark (Doubao) · 免费 · low latency · quality 80</div>
+           <div class="chosen-cost">est. cost: $0.0000 / ¥0.000 · 2 in + 512 out tokens</div>
+           <div class="reasoning">Routed by lowest cost. Estimated 2 input + 512 output tokens. Cheapest reachable is Doubao 1.5 Pro (via Volcengine Ark) — free (5,000,000 tokens trial). No token cost. Required capabilities [vision, chinese] satisfied. Constrained to region=CN (mainland-accessible without VPN).</div>
+           <div class="fb">Fallbacks: Qwen2.5-VL-72B (via Aliyun Bailian)</div>
+         </div>
+      <details class="raw"><summary>Cost comparison (top 6)</summary>
+        <table class="cmp"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Tier</th><th>$/call</th><th>¥/call</th><th>Caps</th></tr></thead><tbody><tr><td>Doubao 1.5 Pro (via Volcengine Ark)</td><td>Volcengine Ark (Doubao)</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, reasoning, chinese, vision</td></tr><tr><td>Qwen2.5-VL-72B (via Aliyun Bailian)</td><td>Aliyun Bailian</td><td><span class="tag tag-free">FREE</span></td><td>$0.0000</td><td>¥0.000</td><td>text, vision, chinese</td></tr></tbody></table>
+        <p class="savings">Max savings vs most expensive reachable: $0.0000 / ¥0.000 (Doubao 1.5 Pro (via Volcengine Ark) → Qwen2.5-VL-72B (via Aliyun Bailian))</p>
+      </details>
+      <details class="raw"><summary>Raw JSON (route result)</summary><pre>{
+  "ok": true,
+  "chosen": {
+    "id": "doubao-1.5-pro-volcengine",
+    "name": "Doubao 1.5 Pro (via Volcengine Ark)",
+    "provider": "Volcengine Ark (Doubao)",
+    "access_path": "volcengine-ark",
+    "model_ref": "doubao-1.5-pro",
+    "free": true,
+    "free_quota": "5,000,000 tokens trial",
+    "cost_usd": 0,
+    "cost_cny": 0,
+    "latency_tier": "low",
+    "quality_score": 80,
+    "context_window": 32768,
+    "region": [
+      "CN"
+    ],
+    "capabilities": [
+      "text",
+      "reasoning",
+      "chinese",
+      "vision"
+    ],
+    "notes": "Volcengine real-name + card binding required. Trial ends 2026-12-31."
+  },
+  "fallback_chain": [
+    {
+      "id": "qwen2.5-vl-bailian",
+      "name": "Qwen2.5-VL-72B (via Aliyun Bailian)",
+      "provider": "Aliyun Bailian",
+      "access_path": "aliyun-bailian",
+      "model_ref": "qwen2.5-vl-72b-instruct",
+      "free": true,
+      "free_quota": "1,000,000 free tokens (new users)",
+      "cost_usd": 0,
+      "cost_cny": 0,
+      "latency_tier": "low",
+      "quality_score": 78,
+      "context_window": 32768,
+      "region": [
+        "CN"
+      ],
+      "capabilities": [
+        "text",
+        "vision",
+        "chinese"
+      ],
+      "notes": "Free vision model on Bailian for image understanding tasks."
+    }
+  ],
+  "estimated_input_tokens": 2,
+  "estimated_output_tokens": 512,
+  "estimated_cost_usd": 0,
+  "estimated_cost_cny": 0,
+  "priority": "cost",
+  "reasoning": "Routed by lowest cost. Estimated 2 input + 512 output tokens. Cheapest reachable is Doubao 1.5 Pro (via Volcengine Ark) — free (5,000,000 tokens trial). No token cost. Required capabilities [vision, chinese] satisfied. Constrained to region=CN (mainland-accessible without VPN)."
+}</pre></details>
+    </section>
+
+  <footer>
+    <p><b>Agent 如何消费：</b>本 MCP 为 <b>pull-based、read-only</b>。Agent 经 <code>initialize → tools/list → tools/call(route)</code> 主动拉取；
+    拿到 <code>chosen.model_ref + access_path</code> 后，自行用对应厂商的 OpenAI 兼容接口发起调用。路由结果仅作为<b>约束建议</b>，不修改 agent 权重或 system prompt。</p>
+    <p><b>本工具不做什么（诚实边界）：</b>① 不替你发起真实推理请求（只选路由）；② 不缓存或存储你的 prompt（hosted 持久缓存为付费能力）；
+    ③ 不保证免费额度实时可用（额度由厂商控制，可能 429）；④ 价格随厂商变动，请以官方为准。</p>
+    <p>Generated 2026-10-01 · Cheapest-LLM Router v0.1.0 · MIT</p>
+  </footer>
+</div>
+</body>
+</html>
