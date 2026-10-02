@@ -1,6 +1,7 @@
 {
   "title": "Cheapest-LLM Router input",
   "type": "object",
+  "schemaVersion": 1,
   "description": "This Actor is a remote MCP server. It takes no input — connect via the MCP endpoint and call the tools (route, cost_compare, list_models, cache_route). See README.md for usage.",
   "properties": {},
   "required": []

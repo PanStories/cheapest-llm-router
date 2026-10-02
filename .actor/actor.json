@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "cheapest-llm-router",
   "version": "0.1",
-  "title": "Cheapest-LLM Router — MCP (route any prompt to the cheapest LLM)",
+  "title": "Cheapest-LLM Router MCP - route to the cheapest LLM",
   "description": "MCP server that routes any prompt to the cheapest reachable free/cheap LLM (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini...). Reuses Free & Cheap Tokens model channels. Pay-Per-Event: no monthly fee, pay only per tool call.",
   "main": "src/http.mjs",
   "type": "module",
@@ -11,13 +11,10 @@
   "webServerMcpPath": "/mcp",
   "pricingModel": "PAY_PER_EVENT",
   "pricingEvents": {
-    "mcp-initialize": { "eventTitle": "MCP initialize handshake", "eventPriceUsd": 0 },
-    "mcp-list-tools": { "eventTitle": "MCP list_tools discovery", "eventPriceUsd": 0 },
-    "mcp-report-issue": { "eventTitle": "MCP report_issue", "eventPriceUsd": 0 },
-    "mcp-route": { "eventTitle": "MCP route call — cheapest model + cost estimate", "eventPriceUsd": 0.0005 },
-    "mcp-cost-compare": { "eventTitle": "MCP cost_compare call — ranked cost report", "eventPriceUsd": 0.001 },
-    "mcp-list-models": { "eventTitle": "MCP list_models call — filtered registry", "eventPriceUsd": 0.0005 },
-    "mcp-cache-route": { "eventTitle": "MCP cache_route call — in-process cache demo", "eventPriceUsd": 0.0005 }
+    "mcp-route": { "eventTitle": "MCP route call - cheapest model + cost estimate", "eventPriceUsd": 0.0005 },
+    "mcp-cost-compare": { "eventTitle": "MCP cost_compare call - ranked cost report", "eventPriceUsd": 0.001 },
+    "mcp-list-models": { "eventTitle": "MCP list_models call - filtered registry", "eventPriceUsd": 0.0005 },
+    "mcp-cache-route": { "eventTitle": "MCP cache_route call - in-process cache demo", "eventPriceUsd": 0.0005 }
   },
   "input": "./input_schema.json",
   "output": "./output_schema.json",
