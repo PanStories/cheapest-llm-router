@@ -1,0 +1,27 @@
+# Dockerfile.glama — stdio image used for Glama container releases.
+#
+# ⚠️ Do NOT confuse this with ./.actor/Dockerfile (Apify Standby HTTP server).
+#    Glama speaks MCP over **stdin/stdout (stdio)**, so the entrypoint must be
+#    the stdio server, not the HTTP one.
+#
+#    Glama Admin → Dockerfile admin page → set Dockerfile path to `Dockerfile.glama`.
+#
+# This server is genuinely zero-dependency: it implements the JSON-RPC surface by
+# hand using only `node:` builtins (see src/server.mjs / src/core/router.mjs).
+# So there is deliberately NO `npm install` here — faster, smaller, and immune to
+# build-time network failures.
+#
+# data/models.json is the model registry and is read at runtime
+# (src/core/router.mjs → join(__dirname,'..','..','data','models.json')),
+# so it MUST be copied.
+
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package.json ./
+COPY src ./src
+COPY data ./data
+
+# stdio transport: MCP JSON-RPC on stdin/stdout. No port is exposed.
+CMD ["node", "src/server.mjs"]
