@@ -88,14 +88,15 @@ test('costCompare: returns ranked comparisons with savings', () => {
 
 test('listModels: free_only filter', () => {
   const free = listModels({ free_only: true });
-  assert.ok(free.length >= 10);
-  assert.ok(free.every((m) => m.free === true));
+  assert.ok(free.models.length >= 10);
+  assert.ok(free.models.every((m) => m.free === true));
+  assert.equal(free.count, free.models.length);
 });
 
 test('listModels: capability filter', () => {
   const vision = listModels({ capability: 'vision' });
-  assert.ok(vision.length >= 1);
-  assert.ok(vision.every((m) => m.capabilities.includes('vision')));
+  assert.ok(vision.models.length >= 1);
+  assert.ok(vision.models.every((m) => m.capabilities.includes('vision')));
 });
 
 test('RouteCache: second identical call is a cache hit', () => {

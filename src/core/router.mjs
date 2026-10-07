@@ -225,12 +225,13 @@ export function costCompare(input = {}) {
 }
 
 // List registry models with optional filters.
+// Returns an object (never a bare array) so it is valid as MCP structuredContent.
 export function listModels({ capability, region, free_only } = {}) {
   let models = getRegistry().models;
   if (capability) models = models.filter((m) => (m.capabilities || []).includes(capability));
   if (region) models = models.filter((m) => (m.region || []).includes(region));
   if (free_only) models = models.filter((m) => m.free);
-  return models.map((m) => ({
+  const items = models.map((m) => ({
     id: m.id,
     name: m.name,
     provider: m.provider_name,
@@ -242,6 +243,7 @@ export function listModels({ capability, region, free_only } = {}) {
     quality_score: m.quality_score,
     context_window: m.context_window,
   }));
+  return { models: items, count: items.length };
 }
 
 // In-memory route cache — the monetization "advanced routing/caching" layer.
