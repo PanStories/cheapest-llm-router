@@ -59,8 +59,8 @@ function capabilityOk(model, required) {
 
 function costFor(model, inTok, outTok) {
   if (model.free) return 0;
-  const pin = model.price_in_per_1m_usd || 0;
-  const pout = model.price_out_per_1m_usd || 0;
+  const pin = model.price_in_per_1m_usd ?? 0;
+  const pout = model.price_out_per_1m_usd ?? 0;
   return (inTok * pin + outTok * pout) / 1e6;
 }
 
@@ -81,6 +81,9 @@ function summarize(s, inTok, outTok, cny) {
     model_ref: s.model.model_ref,
     free: s.model.free,
     free_quota: s.model.free ? s.model.free_quota || null : null,
+    requires_paid_plan: s.model.requires_paid_plan || null,
+    plan_note: s.model.requires_paid_plan ? s.model.plan_note || null : null,
+    pricing_unverified: s.model.pricing_unverified || false,
     cost_usd: round(s.cost),
     cost_cny: round(s.cost * cny),
     latency_tier: s.model.latency_tier,
@@ -130,6 +133,11 @@ export function planRoutes(input = {}) {
     if (a.cost !== b.cost) return a.cost - b.cost;
     // free beats paid at equal cost; among free prefer larger quota then lower latency
     if (a.model.free !== b.model.free) return a.model.free ? -1 : 1;
+    // Among paid models at equal token cost, prefer one you can reach without
+    // buying a subscription (e.g. Kimi K2.6 on Cloudflare needs Workers Paid).
+    const pa = a.model.requires_paid_plan ? 1 : 0;
+    const pb = b.model.requires_paid_plan ? 1 : 0;
+    if (pa !== pb) return pa - pb;
     if (a.model.free && b.model.free) {
       const qa = a.model.free_quota_score ?? 0;
       const qb = b.model.free_quota_score ?? 0;
@@ -149,6 +157,8 @@ function buildReasoning(best, input, inTok, outTok) {
   parts.push(`Estimated ${inTok} input + ${outTok} output tokens.`);
   if (best.model.free) {
     parts.push(`Cheapest reachable is ${best.model.name} — free (${best.model.free_quota}). No token cost.`);
+  } else if (best.model.requires_paid_plan) {
+    parts.push(`Cheapest reachable is ${best.model.name}, but it needs a paid subscription (${best.model.requires_paid_plan}) — ${best.model.plan_note || 'see provider docs'}.`);
   } else {
     parts.push(`No free model matches the constraints; cheapest paid is ${best.model.name} at $${round(best.cost).toFixed(6)} (¥${(round(best.cost * (input._cny || 7.2))).toFixed(4)}).`);
   }
@@ -225,6 +235,7 @@ export function listModels({ capability, region, free_only } = {}) {
     name: m.name,
     provider: m.provider_name,
     free: m.free,
+    requires_paid_plan: m.requires_paid_plan || null,
     capabilities: m.capabilities,
     region: m.region,
     latency_tier: m.latency_tier,

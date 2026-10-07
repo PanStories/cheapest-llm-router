@@ -1,0 +1,52 @@
+{
+  "slug": "cheapest-llm-router",
+  "version": "0.2.0",
+  "repo_root": "C:/Users/USER/WorkBuddy/MCP/mcp-cheapest-llm-router/repo",
+  "endpoint": "https://neeenja--cheapest-llm-router.apify.actor/mcp",
+  "tagline": {
+    "en": "Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.",
+    "zh": "把任意 prompt 路由到最便宜的可达大模型 —— 先用免费额度，再退到最低价付费模型。",
+    "zh_hant": "把任意 prompt 路由到最便宜的可達大型語言模型 —— 先用免費額度，再退到最低價付費模型。"
+  },
+  "tools": [
+    { "name": "route", "price": "0.0005" },
+    { "name": "cost_compare", "price": "0.001" },
+    { "name": "list_models", "price": "0.0005" },
+    { "name": "cache_route", "price": "0.0005" }
+  ],
+  "surfaces": [
+    {
+      "id": "README",
+      "path": "README.md",
+      "require": [
+        "{version}",
+        "{endpoint}",
+        "{tagline.en}",
+        "{tagline.zh}",
+        "{tagline.zh_hant}",
+        "{tools.all}",
+        "{prices.all}"
+      ]
+    },
+    {
+      "id": "CHANGELOG",
+      "path": "CHANGELOG.md",
+      "require": ["{version}"]
+    },
+    {
+      "id": "package json",
+      "path": "package.json",
+      "require": ["{version}"]
+    },
+    {
+      "id": "actor json",
+      "path": ".actor/actor.json",
+      "require": ["{tools.billable}"]
+    },
+    {
+      "id": "llms txt",
+      "path": "llms.txt",
+      "require": ["{endpoint}", "{tagline.en}"]
+    }
+  ]
+}

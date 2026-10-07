@@ -1,0 +1,22 @@
+# Cheapest-LLM Router (CLR)
+
+> Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.
+
+MCP server that routes any prompt to the cheapest reachable LLM (free tiers first, cheapest paid fallback second). Reuses the free/cheap model channels of Free & Cheap Tokens (FACT). Four tools: route · cost_compare · list_models · cache_route. Zero-dependency, runs over stdio.
+
+## Endpoint (hosted, Apify Pay-Per-Event)
+https://neeenja--cheapest-llm-router.apify.actor/mcp
+
+## Source
+https://github.com/PanStories/cheapest-llm-router
+
+## Tools
+- route — prompt → cheapest reachable model + USD/CNY cost + fallback chain + reasoning
+- cost_compare — rank every reachable model by cost, report max savings
+- list_models — filtered registry listing (capability / region / free-only)
+- cache_route — same as route, demonstrates the in-process cache
+
+## Pricing (Pay-Per-Event)
+- route / list_models / cache_route: $0.0005 per call
+- cost_compare: $0.001 per call
+- initialize / tools/list / report-issue: free

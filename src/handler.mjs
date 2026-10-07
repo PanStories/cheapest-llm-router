@@ -73,7 +73,7 @@ const TOOL_IMPLS = {
 
 export async function createMcpServer() {
   const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
-  const server = new McpServer({ name: 'cheapest-llm-router', version: '0.1.0' });
+  const server = new McpServer({ name: 'cheapest-llm-router', version: '0.2.0' });
 
   for (const [name, meta] of Object.entries(TOOL_SCHEMAS)) {
     server.tool(name, meta.description, meta.shape, async (args) => {

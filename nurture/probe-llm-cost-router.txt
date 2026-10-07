@@ -1,0 +1,19 @@
+== initialize ==
+{
+ "name": "llm-cost-router",
+ "version": "0.3.0"
+}
+
+== tools/list (6) ==
+- estimate_cost: Estimate the USD cost of an LLM call BEFORE making it. Pure logic, no API call. Give a model id and either a prompt (tokens are estimated) or explicit
+    required: ["model"]
+- recommend_model: Recommend the most cost-effective model capable of a task, BEFORE calling it. Scores prompt complexity (pure logic) and returns the cheapest capable m
+    required: ["prompt"]
+- should_offload_local: Decide whether a task can run on a FREE local model (Ollama) instead of paying for the cloud. Returns a boolean + the estimated USD saved vs a cloud m
+    required: ["prompt"]
+- list_models: List the known models with their pricing (USD per 1M tokens), capability tier and context window.
+    required: []
+- compare_models: Compare LLM models side-by-side on cost + capability for a given prompt or token budget. Returns a table sorted cheapest-first with tier, context wind
+    required: []
+- estimate_monthly_cost: Project your monthly LLM bill for a given model + usage pattern (calls/day + avg tokens). Returns cost per call, monthly total, yearly total, and chea
+    required: ["model"]

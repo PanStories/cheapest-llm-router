@@ -190,7 +190,7 @@ const html = `<!DOCTYPE html>
     拿到 <code>chosen.model_ref + access_path</code> 后，自行用对应厂商的 OpenAI 兼容接口发起调用。路由结果仅作为<b>约束建议</b>，不修改 agent 权重或 system prompt。</p>
     <p><b>本工具不做什么（诚实边界）：</b>① 不替你发起真实推理请求（只选路由）；② 不缓存或存储你的 prompt（hosted 持久缓存为付费能力）；
     ③ 不保证免费额度实时可用（额度由厂商控制，可能 429）；④ 价格随厂商变动，请以官方为准。</p>
-    <p>Generated ${new Date().toISOString().slice(0, 10)} · Cheapest-LLM Router v0.1.0 · MIT</p>
+    <p>Generated ${new Date().toISOString().slice(0, 10)} · Cheapest-LLM Router v0.2.0 · MIT</p>
   </footer>
 </div>
 </body>

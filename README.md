@@ -1,8 +1,8 @@
 # Cheapest-LLM Router (CLR)
 
-> Route any prompt to the **cheapest reachable free/cheap LLM** — automatically.
-> Reuses the free-model channels of [Free &amp; Cheap Tokens (FACT)](https://github.com/PanStories/free-and-cheap-tokens) (Kimi K2.6 · Qwen · DeepSeek · Cloudflare Workers AI · Groq · Gemini …).
-> A **zero-dependency** MCP server (runs over stdio, no `npm install`) with 4 tools: `route` · `cost_compare` · `list_models` · `cache_route`.
+> Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.
+> Reuses the free-model channels of [Free &amp; Cheap Tokens (FACT)](https://github.com/PanStories/free-and-cheap-tokens) (Qwen · DeepSeek · Groq · Gemini · Hunyuan · GLM …).
+> A **zero-dependency** MCP server (runs over stdio, `npx -y cheapest-llm-router` or `node src/server.mjs`) with 4 tools: `route` · `cost_compare` · `list_models` · `cache_route`.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-%3E%3D20-339933)](https://nodejs.org)
@@ -22,15 +22,19 @@
 <a id="english"></a>
 # English
 
+**Current version: 0.2.0**
+
+Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.
+
 **Cheapest-LLM Router** is an [MCP](https://modelcontextprotocol.io) server that, given a prompt, automatically picks the **cheapest model that can actually serve it** — free models first, then the lowest-cost paid fallback — and returns the cost in both USD and CNY plus a fallback chain and plain-English reasoning. It does **not** call any model; it only does the routing math, so it costs nothing to run and nothing to call except the tiny Apify Pay-Per-Event fee when hosted.
 
 ## Why this exists
 
-- **Zero new learning** — it reuses the curated model list and free channels already built for [FACT](https://github.com/PanStories/free-and-cheap-tokens).
+- **Model routing is the single biggest cost lever** — published 2026 teardowns put it at 30–40% of an agent's bill ([HermesOS, 2026](https://hermesos.cloud/blog/ai-agent-api-cost-optimization)), and 60–80% on the simple-task slice ([Compresr, 2026](https://compresr.ai/blog/llm-api-costs-optimization-guide)).
+- **Decision happens before the call** — unlike LiteLLM/OpenRouter/Helicone, which sit in the request path and measure spend afterwards, this server advises inside the assistant's reasoning loop, so the model itself can choose the cheap route.
+- **Free cloud tiers, not just local Ollama** — the registry tracks 14 models with a genuine $0 cloud tier (Qwen3-Plus, DeepSeek-V3, Hunyuan-Pro, Groq, Gemini 2.5 Flash, GLM-4-Plus …). Most competing routers only offer "free" via self-hosted Ollama.
+- **Mainland-China reachability** — `region=CN` filters to models reachable without a VPN; no other router MCP models this.
 - **Zero marginal cost** — routing is pure local computation; no paid API is ever called.
-- **100% brand synergy** — it complements FACT's "free/cheap tokens" positioning and cross-sells to the same users.
-- **Monetization** — advanced routing / caching / the cost-comparison report layer is the hosted paid tier.
-- **Cold-start revenue estimate** — ¥0–¥500/month via FACT-user conversion.
 
 ## What you get (MCP tools)
 
@@ -181,15 +185,19 @@ cheapest-llm-router/
 <a id="简体中文"></a>
 # 简体中文
 
+**当前版本：0.2.0**
+
+> 把任意 prompt 路由到最便宜的可达大模型 —— 先用免费额度，再退到最低价付费模型。
+
 **Cheapest-LLM Router** 是一个 [MCP](https://modelcontextprotocol.io) 服务器：给定一条 prompt，它会自动选出**当下最便宜且能真正服务它的模型**——优先免费模型，其次最低成本的付费兜底——并以美元和人民币双币种返回成本、兜底链与推理说明。它**不会**真正调用任何模型，只做路由计算，因此本地运行零成本，托管后除极低的 Apify 按事件计费外也无其他开销。
 
 ## 为什么做这个
 
-- **零新学习**——直接复用为 [FACT](https://github.com/PanStories/free-and-cheap-tokens) 策展的模型清单与免费通道。
+- **模型路由是最大成本杠杆**——2026 年拆解数据显示它占一个 Agent 账单的 30–40%（[HermesOS, 2026](https://hermesos.cloud/blog/ai-agent-api-cost-optimization)），在简单任务上甚至高达 60–80%（[Compresr, 2026](https://compresr.ai/blog/llm-api-costs-optimization-guide)）。
+- **决策发生在调用之前**——与 LiteLLM / OpenRouter / Helicone 不同（它们都在请求路径里、事后才计量花费），本服务在助手的推理循环内部给建议，让模型自己就能选便宜的路线。
+- **真正的云端免费额度，不止本地 Ollama**——注册表追踪 14 个具备真·$0 云端额度的模型（Qwen3-Plus、DeepSeek-V3、Hunyuan-Pro、Groq、Gemini 2.5 Flash、GLM-4-Plus …）。多数竞品路由只靠自托管 Ollama 提供"免费"。
+- **中国大陆可达性**——`region=CN` 过滤出免 VPN 即可访问的模型；没有其他路由 MCP 做这件事。
 - **零边际成本**——路由是纯本地计算，从不调用任何付费 API。
-- **100% 品牌协同**——与 FACT「免费/廉价 token」定位天然互补，可向同一批用户交叉转化。
-- **变现点**——高级路由 / 缓存 / 成本对比报表层即托管的付费能力。
-- **冷启动月收入预估**——¥0–¥500（靠 FACT 用户转化）。
 
 ## 你得到什么（MCP 工具）
 
@@ -342,15 +350,19 @@ cheapest-llm-router/
 <a id="繁體中文"></a>
 # 繁體中文
 
+**當前版本：0.2.0**
+
+> 把任意 prompt 路由到最便宜的可達大型語言模型 —— 先用免費額度，再退到最低價付費模型。
+
 **Cheapest-LLM Router** 是一個 [MCP](https://modelcontextprotocol.io) 伺服器：給定一條 prompt，它會自動選出**當下最便宜且能真正服務它的模型**——優先免費模型，其次最低成本的付費兜底——並以美元與人民幣雙幣種回傳成本、兜底鏈與推理說明。它**不會**真正呼叫任何模型，只做路由計算，因此本地執行零成本，託管後除極低的 Apify 按事件計費外也無其他開銷。
 
 ## 為什麼做這個
 
-- **零新學習**——直接複用為 [FACT](https://github.com/PanStories/free-and-cheap-tokens) 策展的模型清單與免費通道。
+- **模型路由是最大成本槓桿**——2026 年拆解數據顯示它佔一個 Agent 帳單的 30–40%（[HermesOS, 2026](https://hermesos.cloud/blog/ai-agent-api-cost-optimization)），在簡單任務上甚至高達 60–80%（[Compresr, 2026](https://compresr.ai/blog/llm-api-costs-optimization-guide)）。
+- **決策發生在呼叫之前**——與 LiteLLM / OpenRouter / Helicone 不同（它們都在請求路徑裡、事後才計量花費），本服務在助手的推理循環內部給建議，讓模型自己就能選便宜的路線。
+- **真正的雲端免費額度，不止本地 Ollama**——註冊表追蹤 14 個具備真·$0 雲端額度的模型（Qwen3-Plus、DeepSeek-V3、Hunyuan-Pro、Groq、Gemini 2.5 Flash、GLM-4-Plus …）。多數競品路由只靠自託管 Ollama 提供「免費」。
+- **中國大陸可達性**——`region=CN` 過濾出免 VPN 即可訪問的模型；沒有其他路由 MCP 做這件事。
 - **零邊際成本**——路由是純本地計算，從不呼叫任何付費 API。
-- **100% 品牌協同**——與 FACT「免費/廉價 token」定位天然互補，可向同一批用戶交叉轉化。
-- **變現點**——進階路由 / 快取 / 成本對比報表層即託管的付費能力。
-- **冷啟動月收入預估**——¥0–¥500（靠 FACT 用戶轉化）。
 
 ## 你得到什麼（MCP 工具）
 

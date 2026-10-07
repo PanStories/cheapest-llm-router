@@ -1,9 +1,9 @@
 {
   "actorSpecification": 1,
   "name": "cheapest-llm-router",
-  "version": "0.1",
-  "title": "Cheapest-LLM Router MCP - route to the cheapest LLM",
-  "description": "MCP server that routes any prompt to the cheapest reachable free/cheap LLM (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini...). Reuses Free & Cheap Tokens model channels. Pay-Per-Event: no monthly fee, pay only per tool call.",
+  "version": "0.2",
+  "title": "Cheapest-LLM Router (CLR) - pick the cheapest LLM per prompt",
+  "description": "Model routing is the single biggest LLM cost lever - published 2026 teardowns put it at 30-40% of an agent's API bill (60-80% on simple tasks). This MCP server routes any prompt to the cheapest reachable LLM - free tiers first, cheapest paid fallback second. Four tools: route (pick cheapest model + USD/CNY cost + fallback chain), cost_compare (rank every model, report max savings), list_models (filter registry by capability/region/free-only), cache_route (cached repeat routing). 19-model registry, 14 with a free tier, 9 reachable from mainland China without a VPN. Runs free locally over stdio (npx cheapest-llm-router); this hosted Actor adds Pay-Per-Event remote access - no monthly fee, pay only per tool call.",
   "main": "src/http.mjs",
   "type": "module",
   "Dockerfile": ".actor/Dockerfile",

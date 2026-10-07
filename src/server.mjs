@@ -19,7 +19,7 @@ import {
 } from './core/router.mjs';
 
 const SERVER_NAME = 'cheapest-llm-router';
-const SERVER_VERSION = '0.1.0';
+const SERVER_VERSION = '0.2.0';
 const PROTOCOL_VERSION = '2025-06-18';
 
 const cache = new RouteCache();
