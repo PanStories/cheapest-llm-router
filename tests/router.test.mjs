@@ -36,6 +36,18 @@ test('route: default picks a free model with zero cost', () => {
   assert.match(r.reasoning, /Routed by lowest cost/);
 });
 
+test('route: returns a savings block vs the priciest reachable model', () => {
+  const r = route({ prompt: 'Summarize this article about stocks.' });
+  assert.equal(r.ok, true);
+  assert.ok(r.savings, 'savings block present');
+  assert.equal(typeof r.savings.vs_most_expensive_reachable_pct, 'number');
+  assert.ok(r.savings.vs_most_expensive_reachable_pct >= 0 && r.savings.vs_most_expensive_reachable_pct <= 100);
+  // best is free; priciest reachable is a paid model → ~100% saving
+  assert.ok(r.savings.vs_most_expensive_reachable_pct >= 90, `expected high saving, got ${r.savings.vs_most_expensive_reachable_pct}`);
+  assert.ok(r.savings.reference_model, 'reference model named');
+  assert.ok(r.reasoning.match(/saves ~\d+(\.\d+)?%/), 'reasoning mentions the saving');
+});
+
 test('route: chinese+reasoning still resolves free within global region', () => {
   const r = route({ prompt: '分析一下这份财报的核心风险', required_capabilities: ['chinese', 'reasoning'] });
   assert.equal(r.ok, true);

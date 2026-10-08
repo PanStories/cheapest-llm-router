@@ -1,6 +1,6 @@
 {
   "name": "cheapest-llm-router",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server that routes any prompt to the cheapest reachable free/cheap LLM (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini...). Reuses Free & Cheap Tokens model channels.",
   "type": "module",
   "license": "MIT",

@@ -150,7 +150,7 @@ export function planRoutes(input = {}) {
   return { inTok, outTok, cny, scored };
 }
 
-function buildReasoning(best, input, inTok, outTok) {
+function buildReasoning(best, input, inTok, outTok, savings) {
   const parts = [];
   const mode = input.priority === 'latency' ? 'lowest latency' : input.priority === 'quality' ? 'highest quality' : 'lowest cost';
   parts.push(`Routed by ${mode}.`);
@@ -161,6 +161,9 @@ function buildReasoning(best, input, inTok, outTok) {
     parts.push(`Cheapest reachable is ${best.model.name}, but it needs a paid subscription (${best.model.requires_paid_plan}) — ${best.model.plan_note || 'see provider docs'}.`);
   } else {
     parts.push(`No free model matches the constraints; cheapest paid is ${best.model.name} at $${round(best.cost).toFixed(6)} (¥${(round(best.cost * (input._cny || 7.2))).toFixed(4)}).`);
+  }
+  if (savings && savings.vs_most_expensive_reachable_pct > 0) {
+    parts.push(`Routing here instead of the priciest reachable option (${savings.reference_model}) saves ~${savings.vs_most_expensive_reachable_pct}% ($${savings.vs_most_expensive_reachable_usd.toFixed(4)}).`);
   }
   if (input.required_capabilities && input.required_capabilities.length) {
     parts.push(`Required capabilities [${input.required_capabilities.join(', ')}] satisfied.`);
@@ -190,6 +193,20 @@ export function route(input = {}) {
   const best = scored[0];
   const fallbacks = scored.slice(1, 4).map((s) => summarize(s, inTok, outTok, cny));
 
+  // Savings vs the priciest reachable model in the same candidate set. This is
+  // the headline metric for the adoption pitch: "routing beats the expensive
+  // default". A free best against a paid priciest => ~100% saving.
+  const priciest = scored[scored.length - 1];
+  const priciestCost = priciest ? priciest.cost : 0;
+  const savedUsd = round(priciestCost - best.cost);
+  const savedPct = priciestCost > 0 ? Math.round((savedUsd / priciestCost) * 1000) / 10 : 0;
+  const savings = {
+    vs_most_expensive_reachable_usd: savedUsd,
+    vs_most_expensive_reachable_cny: round(savedUsd * cny),
+    vs_most_expensive_reachable_pct: savedPct,
+    reference_model: priciest ? priciest.model.name : null,
+  };
+
   return {
     ok: true,
     chosen: summarize(best, inTok, outTok, cny),
@@ -198,8 +215,9 @@ export function route(input = {}) {
     estimated_output_tokens: outTok,
     estimated_cost_usd: round(best.cost),
     estimated_cost_cny: round(best.cost * cny),
+    savings,
     priority: input.priority || 'cost',
-    reasoning: buildReasoning(best, inputWithCny, inTok, outTok),
+    reasoning: buildReasoning(best, inputWithCny, inTok, outTok, savings),
   };
 }
 

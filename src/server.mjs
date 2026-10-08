@@ -19,7 +19,7 @@ import {
 } from './core/router.mjs';
 
 const SERVER_NAME = 'cheapest-llm-router';
-const SERVER_VERSION = '0.2.0';
+const SERVER_VERSION = '0.2.1';
 const PROTOCOL_VERSION = '2025-06-18';
 
 const cache = new RouteCache();
@@ -28,7 +28,7 @@ const TOOLS = [
   {
     name: 'route',
     description:
-      'Given a prompt, route it to the cheapest reachable free/cheap LLM. Returns the chosen model, estimated cost (USD + CNY), a fallback chain, and reasoning. Reuses Free & Cheap Tokens model channels (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini, etc.).',
+      'Given a prompt, route it to the cheapest reachable free/cheap LLM. Returns the chosen model, estimated cost (USD + CNY), a fallback chain, reasoning, and how much it saves vs the priciest reachable model. Reuses Free & Cheap Tokens model channels (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini, etc.).',
     inputSchema: {
       type: 'object',
       properties: {

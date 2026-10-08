@@ -22,7 +22,7 @@
 <a id="english"></a>
 # English
 
-**Current version: 0.2.0**
+**Current version: 0.2.1**
 
 Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.
 
@@ -185,7 +185,7 @@ cheapest-llm-router/
 <a id="简体中文"></a>
 # 简体中文
 
-**当前版本：0.2.0**
+**当前版本：0.2.1**
 
 > 把任意 prompt 路由到最便宜的可达大模型 —— 先用免费额度，再退到最低价付费模型。
 
@@ -350,7 +350,7 @@ cheapest-llm-router/
 <a id="繁體中文"></a>
 # 繁體中文
 
-**當前版本：0.2.0**
+**當前版本：0.2.1**
 
 > 把任意 prompt 路由到最便宜的可達大型語言模型 —— 先用免費額度，再退到最低價付費模型。
 
