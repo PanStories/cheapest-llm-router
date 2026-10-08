@@ -2,7 +2,7 @@
 
 > Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.
 > Reuses the free-model channels of [Free &amp; Cheap Tokens (FACT)](https://github.com/PanStories/free-and-cheap-tokens) (Qwen · DeepSeek · Groq · Gemini · Hunyuan · GLM …).
-> A **zero-dependency** MCP server (runs over stdio, `npx -y cheapest-llm-router` or `node src/server.mjs`) with 4 tools: `route` · `cost_compare` · `list_models` · `cache_route`.
+> A **zero-dependency** MCP server (runs over stdio with plain `node src/server.mjs` — no install, no npm) with 4 tools: `route` · `cost_compare` · `list_models` · `cache_route`.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-%3E%3D20-339933)](https://nodejs.org)
@@ -22,7 +22,7 @@
 <a id="english"></a>
 # English
 
-**Current version: 0.2.1**
+**Current version: 0.2.2**
 
 Route any prompt to the cheapest reachable LLM — free tiers first, cheapest paid fallback second.
 
@@ -185,7 +185,7 @@ cheapest-llm-router/
 <a id="简体中文"></a>
 # 简体中文
 
-**当前版本：0.2.1**
+**当前版本：0.2.2**
 
 > 把任意 prompt 路由到最便宜的可达大模型 —— 先用免费额度，再退到最低价付费模型。
 
@@ -350,7 +350,7 @@ cheapest-llm-router/
 <a id="繁體中文"></a>
 # 繁體中文
 
-**當前版本：0.2.1**
+**當前版本：0.2.2**
 
 > 把任意 prompt 路由到最便宜的可達大型語言模型 —— 先用免費額度，再退到最低價付費模型。
 

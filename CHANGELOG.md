@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.2 (2026-10-08)
+
+- **Trust & quality gate (M8ven / OpenAI MCP directory).** Ran the local 12-check `trust_audit.py` and fixed every actionable finding so the server is directory-grade:
+  - **Tool annotations on all 4 tools.** `route`, `cost_compare`, `list_models`, `cache_route` now declare the four explicit boolean hints (`readOnlyHint:true`, `destructiveHint:false`, `idempotentHint:true`, `openWorldHint:false`) in both transports — stdio (`src/server.mjs`) and hosted SDK (`src/handler.mjs`, via `registerTool`). The OpenAI MCP directory **hard-rejects** any tool missing a hint.
+  - **Tools now covered by tests.** New `tests/tools.test.mjs` connects a real MCP `Client` over `InMemoryTransport`, calls all 4 tools, and asserts each carries the canonical hint set. Suite is now 15 tests (was 13); `npm test` runs both files.
+  - **Dependency + lockfile.** `@modelcontextprotocol/sdk` upgraded `1.30.1 → 1.32.1` (clears advisory GHSA-6qxp-vccf-f47h); regenerated `package-lock.json` to match `package.json` (it had drifted — `zod` was missing from the lock, which can silently break `npm ci`).
+  - **Honest install path.** Removed the dead-end `npx -y cheapest-llm-router` from the README — the npm package was never published (404). The stdio server is genuinely zero-install via `git clone` + `node src/server.mjs`, and the README now says exactly that.
+  - **`SECURITY.md` added** — private vulnerability-reporting policy (GitHub Security Advisories).
+- Local trust audit: **0 fail / 2 warn** (both warns are the M8ven badge + publisher file, pending M8ven indexing of this repo). `npm audit`: SDK advisory cleared; the remaining 6 highs are all in the `apify` SDK's `proxy-agent`/`http-cache-semantics` chain (outside the service surface; `apify` already at latest 3.7.2).
+
 ## 0.2.1 (2026-10-08)
 
 - **`route` now reports savings.** Every `route` (and `cache_route`) result includes a `savings` block: `vs_most_expensive_reachable_usd`, `vs_most_expensive_reachable_cny`, `vs_most_expensive_reachable_pct`, and the `reference_model` it was compared against. Routing a free-tier prompt against the priciest reachable paid model shows ~100% saving; the reasoning string now states it in plain English. Directly addresses the adoption signal that the flagship `route` tool was being underused vs `cost_compare`.

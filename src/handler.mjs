@@ -19,7 +19,7 @@ const CAP_ENUM = ['text', 'code', 'reasoning', 'vision', 'chinese', 'long_contex
 const TOOL_SCHEMAS = {
   route: {
     description:
-      'Given a prompt, route it to the cheapest reachable free/cheap LLM. Returns the chosen model, estimated cost (USD + CNY), a fallback chain, reasoning, and how much it saves vs the priciest reachable model. Reuses Free & Cheap Tokens model channels (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini, etc.).',
+      'Given a prompt, pick a reachable model by cost (free tiers first, then the lowest-cost paid option). Returns the chosen model, estimated cost (USD + CNY), a fallback chain, reasoning, and the saving vs the priciest reachable model. Draws from a curated registry of provider models (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini, etc.).',
     shape: {
       prompt: z.string().describe('The task prompt to route. Token estimate is derived from it.'),
       max_output_tokens: z.number().int().optional().default(512).describe('Expected output tokens for cost estimation.'),
@@ -73,16 +73,29 @@ const TOOL_IMPLS = {
 
 export async function createMcpServer() {
   const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
-  const server = new McpServer({ name: 'cheapest-llm-router', version: '0.2.1' });
+  const server = new McpServer({ name: 'cheapest-llm-router', version: '0.2.2' });
 
   for (const [name, meta] of Object.entries(TOOL_SCHEMAS)) {
-    server.tool(name, meta.description, meta.shape, async (args) => {
-      const result = TOOL_IMPLS[name](args);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        structuredContent: result,
-      };
-    });
+    server.registerTool(
+      name,
+      {
+        description: meta.description,
+        inputSchema: meta.shape,
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) => {
+        const result = TOOL_IMPLS[name](args);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          structuredContent: result,
+        };
+      },
+    );
   }
 
   return server;

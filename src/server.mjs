@@ -19,7 +19,7 @@ import {
 } from './core/router.mjs';
 
 const SERVER_NAME = 'cheapest-llm-router';
-const SERVER_VERSION = '0.2.1';
+const SERVER_VERSION = '0.2.2';
 const PROTOCOL_VERSION = '2025-06-18';
 
 const cache = new RouteCache();
@@ -28,7 +28,7 @@ const TOOLS = [
   {
     name: 'route',
     description:
-      'Given a prompt, route it to the cheapest reachable free/cheap LLM. Returns the chosen model, estimated cost (USD + CNY), a fallback chain, reasoning, and how much it saves vs the priciest reachable model. Reuses Free & Cheap Tokens model channels (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini, etc.).',
+      'Given a prompt, pick a reachable model by cost (free tiers first, then the lowest-cost paid option). Returns the chosen model, estimated cost (USD + CNY), a fallback chain, reasoning, and the saving vs the priciest reachable model. Draws from a curated registry of provider models (Kimi K2.6, Qwen, DeepSeek, Cloudflare Workers AI, Groq, Gemini, etc.).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -45,11 +45,12 @@ const TOOLS = [
       },
       required: ['prompt'],
     },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
   {
     name: 'cost_compare',
     description:
-      'Rank every reachable model by estimated cost for a given prompt size. Produces a cost-comparison report (the monetization "report layer") including max savings vs the most expensive reachable model.',
+      'Rank every reachable model by estimated cost for a given prompt size. Produces a cost-comparison report including the maximum saving vs the most expensive reachable model.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -60,6 +61,7 @@ const TOOLS = [
       },
       required: ['prompt'],
     },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
   {
     name: 'list_models',
@@ -72,11 +74,12 @@ const TOOLS = [
         free_only: { type: 'boolean', default: false, description: 'Only free-tier models.' },
       },
     },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
   {
     name: 'cache_route',
     description:
-      'Same as route, but checks an in-process cache first. Demonstrates the advanced caching layer: repeated identical requests return the cached plan with cached=true. A persistent per-account cache is a hosted paid feature.',
+      'Same as route, but checks an in-process cache first. Repeated identical requests return the cached plan with cached=true. A persistent per-account cache is a hosted paid feature.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -89,6 +92,7 @@ const TOOLS = [
       },
       required: ['prompt'],
     },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
 ];
 

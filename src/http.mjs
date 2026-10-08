@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
   }
   res.status(200).json({
     service: 'cheapest-llm-router',
-    version: '0.2.1',
+    version: '0.2.2',
     transports: ['streamable-http'],
     endpoints: ['/mcp'],
   });
