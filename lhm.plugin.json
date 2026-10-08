@@ -1,0 +1,15 @@
+{
+  "identifier": "cheapest-llm-router",
+  "name": "Cheapest-LLM Router",
+  "version": "0.2.1",
+  "description": "Routes any prompt to the cheapest reachable LLM (free tiers first, cheapest paid fallback). Returns chosen model, USD/CNY cost, fallback chain, reasoning, and how much it saves vs the priciest reachable model. Zero-dependency MCP server with 4 tools: route, cost_compare, list_models, cache_route. Reuses the free-model channels of Free & Cheap Tokens (FACT).",
+  "category": "developer-tools",
+  "cloudEndpoint": "https://neeenja--cheapest-llm-router.apify.actor/mcp",
+  "tags": ["llm", "router", "cost-optimization", "free-tier", "mcp", "agents", "apify", "pay-per-event"],
+  "tools": [
+    "route",
+    "cost_compare",
+    "list_models",
+    "cache_route"
+  ]
+}

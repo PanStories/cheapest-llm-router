@@ -71,5 +71,6 @@ if parsed:
           "| requires_paid_plan:", parsed.get("chosen", {}).get("requires_paid_plan"))
     print("fallbacks:", [f.get("name") for f in parsed.get("fallback_chain", [])])
     print("estimated_cost_usd:", parsed.get("estimated_cost_usd"))
+    print("savings:", json.dumps(parsed.get("savings")))
 else:
     print("RAW:", text[:400])
