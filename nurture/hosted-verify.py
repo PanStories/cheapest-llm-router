@@ -51,6 +51,16 @@ session = hdr.get("Mcp-Session-Id")
 # 2) initialized notification
 post({"jsonrpc": "2.0", "method": "notifications/initialized"}, session=session, notify=True)
 
+# 2.5) tools/list — verify the four trust annotations are present on the live server
+s1, hdr1, body1 = post({
+    "jsonrpc": "2.0", "id": 10, "method": "tools/list", "params": {},
+}, session=session)
+msg1 = parse_sse(body1) if "text/event-stream" in (hdr1.get("Content-Type") or "") else json.loads(body1)
+tl = (msg1 or {}).get("result", {}).get("tools", [])
+for t in tl:
+    ann = t.get("annotations", {}) or {}
+    print("tool", t.get("name"), "annotations:", {k: ann.get(k) for k in ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint")})
+
 # 3) route call — simple reasoning prompt, global, include free
 s2, hdr2, body2 = post({
     "jsonrpc": "2.0", "id": 2, "method": "tools/call",
