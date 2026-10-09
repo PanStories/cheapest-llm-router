@@ -8,6 +8,7 @@
 [![Node](https://img.shields.io/badge/Node-%3E%3D20-339933)](https://nodejs.org)
 [![MCP](https://img.shields.io/badge/MCP-2025--06--18-purple)](https://modelcontextprotocol.io)
 [![Pay-Per-Event](https://img.shields.io/badge/Pricing-Pay--Per--Event-success)](https://apify.com/neeenja/cheapest-llm-router)
+[![M8ven Verified](https://m8ven.ai/badge/mcp/panstories-cheapest-llm-router-1y31ap?variant=verified)](https://m8ven.ai/mcp/panstories/cheapest-llm-router?s=readme)
 
 🌐 **[English](#english)** · **[简体中文](#简体中文)** · **[繁體中文](#繁體中文)**
 
